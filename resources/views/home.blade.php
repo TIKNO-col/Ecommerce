@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="https://via.placeholder.com/500x400/007bff/ffffff?text=E-Commerce" alt="Hero Image" class="img-fluid rounded shadow">
+                <img src="{{ asset('imagenlogo.jpg') }}" alt="Hero Image" class="img-fluid rounded shadow">
             </div>
         </div>
     </div>

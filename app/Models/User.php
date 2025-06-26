@@ -32,6 +32,7 @@ class User extends Authenticatable
         'facebook_id',
         'github_id',
         'notification_preferences',
+        'is_admin',
     ];
 
     /**
@@ -56,6 +57,7 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
         'password_reset_expires_at' => 'datetime',
         'notification_preferences' => 'array',
+        'is_admin' => 'boolean',
     ];
 
     /**

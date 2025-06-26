@@ -97,6 +97,22 @@ class Product extends Model
     }
 
     /**
+     * Get the images for this product.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->ordered();
+    }
+
+    /**
+     * Get the primary image for this product.
+     */
+    public function primaryImage()
+    {
+        return $this->hasOne(ProductImage::class)->where('is_primary', true);
+    }
+
+    /**
      * Get the reviews for this product.
      */
     public function reviews(): HasMany
@@ -251,10 +267,61 @@ class Product extends Model
      */
     public function getMainImageAttribute(): ?string
     {
-        if ($this->images && count($this->images) > 0) {
-            return asset('storage/' . $this->images[0]);
+        // First try to get from ProductImage relationship
+        $primaryImage = $this->primaryImage;
+        if ($primaryImage) {
+            return $primaryImage->getImageUrl();
         }
+        
+        // Fallback to images array if it exists and is valid
+        $imagesArray = $this->getImagesArray();
+        if (!empty($imagesArray)) {
+            return asset('storage/' . $imagesArray[0]);
+        }
+        
         return asset('images/placeholder-product.jpg');
+    }
+
+    /**
+     * Get the main image URL (method version).
+     */
+    public function getMainImageUrl(): ?string
+    {
+        // First try to get from ProductImage relationship
+        $primaryImage = $this->primaryImage;
+        if ($primaryImage) {
+            return $primaryImage->getImageUrl();
+        }
+        
+        // Fallback to first image from images array
+        $imagesArray = $this->getImagesArray();
+        if (!empty($imagesArray)) {
+            return asset('storage/' . $imagesArray[0]);
+        }
+        
+        // Default placeholder
+        return asset('images/placeholder-product.jpg');
+    }
+    
+    /**
+     * Get images as array, handling both JSON string and array formats.
+     */
+    private function getImagesArray(): array
+    {
+        if (empty($this->images)) {
+            return [];
+        }
+        
+        if (is_array($this->images)) {
+            return $this->images;
+        }
+        
+        if (is_string($this->images)) {
+            $decoded = json_decode($this->images, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        
+        return [];
     }
 
     /**
@@ -307,6 +374,14 @@ class Product extends Model
     public function getFormattedCurrentPriceAttribute(): string
     {
         return '$' . number_format($this->current_price, 2);
+    }
+
+    /**
+     * Check if product is on sale.
+     */
+    public function isOnSale(): bool
+    {
+        return $this->sale_price && $this->sale_price > 0 && $this->sale_price < $this->price;
     }
 
     /**

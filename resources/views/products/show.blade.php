@@ -188,7 +188,7 @@
                         <i class="fas fa-info-circle me-2"></i>Descripción
                     </button>
                 </li>
-                @if($product->attributes && count($product->attributes) > 0)
+                @if($product->attributes && is_array($product->attributes) && count($product->attributes) > 0)
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button" role="tab">
                         <i class="fas fa-list me-2"></i>Especificaciones
@@ -220,7 +220,7 @@
                 </div>
                 
                 <!-- Specifications Tab -->
-                @if($product->attributes && count($product->attributes) > 0)
+                @if($product->attributes && is_array($product->attributes) && count($product->attributes) > 0)
                 <div class="tab-pane fade" id="specifications" role="tabpanel">
                     <div class="p-4">
                         <div class="table-responsive">

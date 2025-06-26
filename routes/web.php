@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\NewsletterController;
 
 // Public Routes
@@ -70,7 +72,15 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('/transfer-guest', [CartController::class, 'transferGuestCart'])->name('transfer-guest');
 });
 
-// Authentication Routes
+// Auth Routes (compatibility routes without prefix)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+});
+
+// Auth Routes with prefix
 Route::prefix('auth')->name('auth.')->group(function () {
     // Guest only routes
     Route::middleware('guest')->group(function () {
@@ -203,8 +213,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Order Management
     Route::patch('/orders/{order}/status', [AdminController::class, 'updateOrderStatus'])->name('orders.update-status');
     
-    // You can add more admin routes here for managing products, categories, users, etc.
-    // Route::resource('products', AdminProductController::class);
+    // Product Management
+    Route::resource('products', AdminProductController::class);
+    Route::post('/products/{product}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('products.toggle-status');
+    Route::post('/products/{product}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
+    Route::post('/products/bulk-action', [AdminProductController::class, 'bulkAction'])->name('products.bulk-action');
+    
+    // You can add more admin routes here for managing categories, users, etc.
     // Route::resource('categories', AdminCategoryController::class);
     // Route::resource('users', AdminUserController::class);
     // Route::resource('orders', AdminOrderController::class);
@@ -232,3 +247,26 @@ Route::prefix('api')->name('api.')->group(function () {
         Route::get('/wishlist', [WishlistController::class, 'apiIndex'])->name('wishlist.api.index');
     });
 });
+
+// Temporary route to setup product images
+Route::get('/setup-images', function () {
+    try {
+        Artisan::call('products:setup-images');
+        return 'Product images setup completed! You can remove this route now.';
+    } catch (Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+})->name('setup.images');
+
+// Terms and Conditions route
+Route::get('/terms', function () {
+    return view('legal.terms');
+})->name('terms');
+
+// Password reset request route (alias for forgot-password)
+Route::get('/password/reset', [AuthController::class, 'showForgotPassword'])->name('password.request');
+
+// Privacy Policy route
+Route::get('/privacy', function () {
+    return view('legal.privacy');
+})->name('privacy');
