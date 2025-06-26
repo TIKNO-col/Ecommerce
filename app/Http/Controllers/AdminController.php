@@ -36,7 +36,7 @@ class AdminController extends Controller
             'total_users' => User::count(),
             'total_products' => Product::count(),
             'total_orders' => Order::count(),
-            'total_revenue' => Order::where('payment_status', Order::PAYMENT_STATUS_PAID)->sum('total_amount'),
+            'total_revenue' => Order::where('payment_status', Order::PAYMENT_PAID)->sum('total_amount'),
             'pending_orders' => Order::where('status', Order::STATUS_PENDING)->count(),
             'low_stock_products' => Product::where('stock_quantity', '<=', 10)->count(),
             'pending_reviews' => Review::where('is_approved', false)->count(),
@@ -56,7 +56,7 @@ class AdminController extends Controller
             ->get();
 
         // Get sales data for chart (last 30 days)
-        $salesData = Order::where('payment_status', Order::PAYMENT_STATUS_PAID)
+        $salesData = Order::where('payment_status', Order::PAYMENT_PAID)
             ->where('created_at', '>=', now()->subDays(30))
             ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total, COUNT(*) as orders')
             ->groupBy('date')
@@ -107,11 +107,11 @@ class AdminController extends Controller
 
         $analytics = [
             'sales' => [
-                'total' => Order::where('payment_status', Order::PAYMENT_STATUS_PAID)
+                'total' => Order::where('payment_status', Order::PAYMENT_PAID)
                     ->where('created_at', '>=', $startDate)
                     ->sum('total_amount'),
                 'orders_count' => Order::where('created_at', '>=', $startDate)->count(),
-                'average_order_value' => Order::where('payment_status', Order::PAYMENT_STATUS_PAID)
+                'average_order_value' => Order::where('payment_status', Order::PAYMENT_PAID)
                     ->where('created_at', '>=', $startDate)
                     ->avg('total_amount'),
                 'daily_data' => Order::where('created_at', '>=', $startDate)

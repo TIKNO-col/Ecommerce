@@ -228,6 +228,202 @@ php artisan queue:work
 - Compresión de assets
 - CDN para archivos estáticos
 
+## 🔧 Comandos Útiles
+
+### Desarrollo
+```bash
+# Iniciar servidor de desarrollo
+php artisan serve
+
+# Compilar assets en modo desarrollo
+npm run dev
+
+# Compilar assets en modo watch
+npm run watch
+
+# Compilar assets para producción
+npm run build
+```
+
+### Base de Datos
+```bash
+# Ejecutar migraciones
+php artisan migrate
+
+# Ejecutar migraciones con seeders
+php artisan migrate --seed
+
+# Rollback de migraciones
+php artisan migrate:rollback
+
+# Refrescar base de datos
+php artisan migrate:fresh --seed
+```
+
+### Cache
+```bash
+# Limpiar todas las cachés
+php artisan optimize:clear
+
+# Limpiar caché específica
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Optimizar para producción
+php artisan optimize
+```
+
+## 🖼️ Optimización de Imágenes
+
+### Instalación de herramientas de optimización
+
+#### En Windows:
+```powershell
+# Instalar Chocolatey (si no está instalado)
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# Instalar herramientas de optimización
+choco install imagemagick
+choco install jpegoptim
+choco install optipng
+choco install gifsicle
+
+# Alternativa con npm
+npm install -g imagemin-cli
+npm install -g imagemin-mozjpeg
+npm install -g imagemin-pngquant
+npm install -g imagemin-gifsicle
+```
+
+#### En Linux/macOS:
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install imagemagick jpegoptim optipng gifsicle webp
+
+# macOS con Homebrew
+brew install imagemagick jpegoptim optipng gifsicle webp
+
+# CentOS/RHEL
+sudo yum install ImageMagick jpegoptim optipng gifsicle libwebp-tools
+```
+
+### Comandos de optimización
+
+#### Optimizar imágenes JPEG:
+```bash
+# Optimización básica
+jpegoptim --max=85 --strip-all storage/app/public/products/*.jpg
+
+# Optimización agresiva
+jpegoptim --max=75 --strip-all --all-progressive storage/app/public/products/*.jpg
+
+# Con ImageMagick
+magick mogrify -quality 85 -strip storage/app/public/products/*.jpg
+```
+
+#### Optimizar imágenes PNG:
+```bash
+# Con optipng
+optipng -o7 storage/app/public/products/*.png
+
+# Con ImageMagick
+magick mogrify -quality 85 -strip storage/app/public/products/*.png
+
+# Convertir PNG a WebP
+for file in storage/app/public/products/*.png; do
+    cwebp -q 85 "$file" -o "${file%.png}.webp"
+done
+```
+
+#### Optimizar imágenes GIF:
+```bash
+# Con gifsicle
+gifsicle --optimize=3 --batch storage/app/public/products/*.gif
+
+# Convertir GIF a WebP (solo primer frame)
+for file in storage/app/public/products/*.gif; do
+    cwebp -q 85 "$file" -o "${file%.gif}.webp"
+done
+```
+
+#### Conversión masiva a WebP:
+```bash
+# Convertir todas las imágenes a WebP
+find storage/app/public/products -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" | while read file; do
+    cwebp -q 85 "$file" -o "${file%.*}.webp"
+done
+```
+
+#### Redimensionar imágenes:
+```bash
+# Redimensionar manteniendo proporción (ancho máximo 800px)
+magick mogrify -resize 800x800> storage/app/public/products/*.jpg
+
+# Crear thumbnails (200x200px)
+mkdir -p storage/app/public/products/thumbnails
+for file in storage/app/public/products/*.jpg; do
+    magick "$file" -resize 200x200^ -gravity center -extent 200x200 "storage/app/public/products/thumbnails/$(basename "$file")"
+done
+```
+
+#### Script de optimización completa:
+```bash
+#!/bin/bash
+# optimize-images.sh
+
+IMAGE_DIR="storage/app/public/products"
+
+echo "Optimizando imágenes en $IMAGE_DIR..."
+
+# Optimizar JPEG
+echo "Optimizando archivos JPEG..."
+jpegoptim --max=85 --strip-all "$IMAGE_DIR"/*.jpg 2>/dev/null
+jpegoptim --max=85 --strip-all "$IMAGE_DIR"/*.jpeg 2>/dev/null
+
+# Optimizar PNG
+echo "Optimizando archivos PNG..."
+optipng -o7 "$IMAGE_DIR"/*.png 2>/dev/null
+
+# Optimizar GIF
+echo "Optimizando archivos GIF..."
+gifsicle --optimize=3 --batch "$IMAGE_DIR"/*.gif 2>/dev/null
+
+# Convertir a WebP
+echo "Convirtiendo a WebP..."
+find "$IMAGE_DIR" -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" | while read file; do
+    if [ ! -f "${file%.*}.webp" ]; then
+        cwebp -q 85 "$file" -o "${file%.*}.webp"
+    fi
+done
+
+echo "Optimización completada!"
+```
+
+### Comandos Artisan personalizados
+
+#### Crear comando para optimización automática:
+```bash
+php artisan make:command OptimizeImages
+```
+
+#### Uso del comando personalizado:
+```bash
+# Optimizar todas las imágenes
+php artisan images:optimize
+
+# Optimizar solo imágenes nuevas
+php artisan images:optimize --new-only
+
+# Generar WebP para todas las imágenes
+php artisan images:webp
+
+# Generar thumbnails
+php artisan images:thumbnails
+```
+
 ## 🧪 Testing
 
 ```bash

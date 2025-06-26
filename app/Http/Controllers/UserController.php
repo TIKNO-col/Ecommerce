@@ -7,7 +7,7 @@ use App\Models\Order;
 use App\Models\Review;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -53,7 +53,7 @@ class UserController extends Controller
             'pending_orders' => $user->orders()->where('status', Order::STATUS_PENDING)->count(),
             'completed_orders' => $user->orders()->where('status', Order::STATUS_DELIVERED)->count(),
             'total_spent' => $user->orders()
-                ->where('payment_status', Order::PAYMENT_STATUS_PAID)
+                ->where('payment_status', Order::PAYMENT_PAID)
                 ->sum('total_amount'),
             'total_reviews' => $user->reviews()->approved()->count(),
             'wishlist_items' => $wishlistCount,
@@ -118,7 +118,7 @@ class UserController extends Controller
     /**
      * Update user profile.
      */
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfile(Request $request)
     {
         $user = Auth::user();
         
@@ -148,30 +148,19 @@ class UserController extends Controller
 
             $user->update($data);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Perfil actualizado exitosamente.',
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'date_of_birth' => $user->date_of_birth,
-                    'gender' => $user->gender,
-                    'avatar' => $user->avatar,
-                ],
-            ]);
+            return redirect()->route('user.profile')
+                ->with('success', 'Perfil actualizado exitosamente.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar el perfil.'
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al actualizar el perfil.')
+                ->withInput();
         }
     }
 
     /**
      * Change user password.
      */
-    public function changePassword(Request $request): JsonResponse
+    public function changePassword(Request $request)
     {
         $request->validate([
             'current_password' => 'required',
@@ -182,11 +171,9 @@ class UserController extends Controller
 
         // Verify current password
         if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'La contraseña actual es incorrecta.',
-                'errors' => ['current_password' => ['La contraseña actual es incorrecta.']]
-            ], 422);
+            return redirect()->back()
+                ->withErrors(['current_password' => 'La contraseña actual es incorrecta.'])
+                ->withInput();
         }
 
         try {
@@ -194,15 +181,12 @@ class UserController extends Controller
                 'password' => Hash::make($request->password)
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Contraseña cambiada exitosamente.',
-            ]);
+            return redirect()->route('user.profile')
+                ->with('success', 'Contraseña cambiada exitosamente.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cambiar la contraseña.'
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al cambiar la contraseña.')
+                ->withInput();
         }
     }
 
@@ -247,19 +231,19 @@ class UserController extends Controller
             ],
             'spending' => [
                 'total' => $user->orders()
-                    ->where('payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('payment_status', Order::PAYMENT_PAID)
                     ->sum('total_amount'),
                 'this_year' => $user->orders()
-                    ->where('payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('payment_status', Order::PAYMENT_PAID)
                     ->whereYear('created_at', now()->year)
                     ->sum('total_amount'),
                 'this_month' => $user->orders()
-                    ->where('payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('payment_status', Order::PAYMENT_PAID)
                     ->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year)
                     ->sum('total_amount'),
                 'average_order' => $user->orders()
-                    ->where('payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('payment_status', Order::PAYMENT_PAID)
                     ->avg('total_amount'),
             ],
             'reviews' => [
@@ -271,7 +255,7 @@ class UserController extends Controller
             ],
             'wishlist' => [
                 'total_items' => Wishlist::getItemsCount(),
-                'in_stock_items' => Wishlist::withInStockProducts()->count(),
+                'in_stock_items' => Wishlist::withInStockProducts()->forCurrentUser()->count(),
                 'on_sale_items' => Wishlist::getOnSaleItems()->count(),
             ],
         ];
@@ -355,7 +339,7 @@ class UserController extends Controller
     /**
      * Update user preferences.
      */
-    public function updatePreferences(Request $request): JsonResponse
+    public function updatePreferences(Request $request)
     {
         $request->validate([
             'email_notifications' => 'boolean',
@@ -388,22 +372,19 @@ class UserController extends Controller
             // For now, store in user table or create a preferences relationship
             $user->update(['preferences' => $preferences]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Preferencias actualizadas exitosamente.',
-            ]);
+            return redirect()->route('user.preferences')
+                ->with('success', 'Preferencias actualizadas exitosamente.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar las preferencias.'
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al actualizar las preferencias.')
+                ->withInput();
         }
     }
 
     /**
      * Delete user account.
      */
-    public function deleteAccount(Request $request): JsonResponse
+    public function deleteAccount(Request $request)
     {
         $request->validate([
             'password' => 'required',
@@ -414,11 +395,9 @@ class UserController extends Controller
 
         // Verify password
         if (!Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Contraseña incorrecta.',
-                'errors' => ['password' => ['Contraseña incorrecta.']]
-            ], 422);
+            return redirect()->back()
+                ->withErrors(['password' => 'Contraseña incorrecta.'])
+                ->withInput();
         }
 
         try {
@@ -428,10 +407,8 @@ class UserController extends Controller
                 ->count();
 
             if ($pendingOrders > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No puedes eliminar tu cuenta mientras tengas pedidos pendientes.'
-                ], 400);
+                return redirect()->back()
+                    ->with('error', 'No puedes eliminar tu cuenta mientras tengas pedidos pendientes.');
             }
 
             // Delete user avatar
@@ -454,22 +431,21 @@ class UserController extends Controller
             // Delete user account
             $user->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Cuenta eliminada exitosamente.',
-            ]);
+            // Logout and redirect to home
+            Auth::logout();
+            return redirect()->route('home')
+                ->with('success', 'Cuenta eliminada exitosamente.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al eliminar la cuenta.'
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al eliminar la cuenta.')
+                ->withInput();
         }
     }
 
     /**
      * Export user data.
      */
-    public function exportData(): JsonResponse
+    public function exportData()
     {
         try {
             $user = Auth::user();
@@ -481,16 +457,16 @@ class UserController extends Controller
                 'wishlist' => $user->wishlists()->with(['product'])->get(),
             ];
 
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-                'message' => 'Datos exportados exitosamente.',
+            $fileName = 'user_data_' . $user->id . '_' . now()->format('Y-m-d_H-i-s') . '.json';
+            
+            return response()->streamDownload(function () use ($data) {
+                echo json_encode($data, JSON_PRETTY_PRINT);
+            }, $fileName, [
+                'Content-Type' => 'application/json',
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al exportar los datos.'
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al exportar los datos.');
         }
     }
 

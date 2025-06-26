@@ -53,7 +53,18 @@ class WishlistController extends Controller
             }),
         ];
 
-        return view('wishlist.index', compact('wishlistItems', 'recommendedProducts', 'stats'));
+        // Get recently viewed products
+        $recentlyViewed = collect();
+        if (session()->has('recently_viewed')) {
+            $recentlyViewedIds = session('recently_viewed', []);
+            $recentlyViewed = Product::active()
+                ->whereIn('id', $recentlyViewedIds)
+                ->orderByRaw('FIELD(id, ' . implode(',', $recentlyViewedIds) . ')')
+                ->limit(8)
+                ->get();
+        }
+
+        return view('wishlist.index', compact('wishlistItems', 'recommendedProducts', 'stats', 'recentlyViewed'));
     }
 
     /**

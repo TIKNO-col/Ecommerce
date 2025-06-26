@@ -28,7 +28,8 @@ class ProductController extends Controller
         $featured = $request->get('featured');
 
         $products = Product::active()
-            ->with(['categories']);
+            ->with(['categories:id,name,slug'])
+            ->select('id', 'name', 'slug', 'price', 'sale_price', 'images', 'description', 'average_rating', 'views_count', 'created_at', 'stock_quantity', 'is_featured');
 
         // Apply filters
         if ($category) {
@@ -84,16 +85,21 @@ class ProductController extends Controller
         $results = $products->paginate($perPage);
         $results->appends($request->query());
 
-        // Get categories for filter
-        $categories = Category::active()
-            ->parents()
-            ->ordered()
-            ->get();
+        // Get categories for filter (cached for 2 hours)
+        $categories = cache()->remember('product_filter_categories', 7200, function () {
+            return Category::active()
+                ->parents()
+                ->ordered()
+                ->select('id', 'name', 'slug')
+                ->get();
+        });
 
-        // Get price range for filters
-        $priceRange = Product::active()
-            ->selectRaw('MIN(COALESCE(sale_price, price)) as min_price, MAX(COALESCE(sale_price, price)) as max_price')
-            ->first();
+        // Get price range for filters (cached for 1 hour)
+        $priceRange = cache()->remember('product_price_range', 3600, function () {
+            return Product::active()
+                ->selectRaw('MIN(COALESCE(sale_price, price)) as min_price, MAX(COALESCE(sale_price, price)) as max_price')
+                ->first();
+        });
 
         // Get current category if specified
         $currentCategory = null;

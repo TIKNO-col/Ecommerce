@@ -210,7 +210,7 @@ class OrderController extends Controller
             'pending_orders' => Auth::user()->orders()->where('status', Order::STATUS_PENDING)->count(),
             'completed_orders' => Auth::user()->orders()->where('status', Order::STATUS_DELIVERED)->count(),
             'total_spent' => Auth::user()->orders()
-                ->where('payment_status', Order::PAYMENT_STATUS_PAID)
+                ->where('payment_status', Order::PAYMENT_PAID)
                 ->sum('total_amount'),
         ];
 

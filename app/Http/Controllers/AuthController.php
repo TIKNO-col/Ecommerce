@@ -45,7 +45,7 @@ class AuthController extends Controller
     /**
      * Handle login request.
      */
-    public function login(Request $request): JsonResponse
+    public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -70,32 +70,19 @@ class AuthController extends Controller
                 'last_login_ip' => $request->ip(),
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => '¡Bienvenido de vuelta, ' . $user->name . '!',
-                'redirect' => $request->get('redirect', route('user.dashboard')),
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'avatar' => $user->avatar,
-                ],
-            ]);
+            return redirect()->intended(route('home'))
+                ->with('success', '¡Bienvenido de vuelta, ' . $user->name . '!');
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
-            'errors' => [
-                'email' => ['Las credenciales proporcionadas son incorrectas.']
-            ]
-        ], 422);
+        return back()->withErrors([
+            'email' => 'Las credenciales proporcionadas son incorrectas.',
+        ])->withInput($request->except('password'));
     }
 
     /**
      * Handle registration request.
      */
-    public function register(Request $request): JsonResponse
+    public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -107,11 +94,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Por favor, corrige los errores en el formulario.',
-                'errors' => $validator->errors()
-            ], 422);
+            return back()->withErrors($validator)->withInput();
         }
 
         try {
@@ -129,47 +112,29 @@ class AuthController extends Controller
             // Send email verification
             $user->sendEmailVerificationNotification();
 
-            // Log the user in
-            Auth::login($user);
-            $request->session()->regenerate();
-
-            // Transfer guest cart to user if exists
-            $this->transferGuestCart($request);
-
-            return response()->json([
-                'success' => true,
-                'message' => '¡Cuenta creada exitosamente! Por favor, verifica tu email.',
-                'redirect' => route('user.dashboard'),
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'avatar' => $user->avatar,
-                ],
-            ]);
+            // Don't log the user in automatically - redirect to login instead
+            return redirect()->route('login')
+                ->with('success', '¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
+                
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear la cuenta. Por favor, inténtalo de nuevo.'
-            ], 500);
+            return back()->withErrors([
+                'general' => 'Error al crear la cuenta. Por favor, inténtalo de nuevo.'
+            ])->withInput();
         }
     }
 
     /**
      * Handle logout request.
      */
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request)
     {
         Auth::logout();
         
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Sesión cerrada exitosamente.',
-            'redirect' => route('home')
-        ]);
+        return redirect()->route('home')
+            ->with('success', 'Sesión cerrada exitosamente.');
     }
 
     /**

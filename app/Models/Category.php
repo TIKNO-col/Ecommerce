@@ -20,6 +20,7 @@ class Category extends Model
         'image',
         'icon',
         'is_active',
+        'is_featured',
         'sort_order',
         'parent_id',
         'meta_title',
@@ -28,6 +29,7 @@ class Category extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -97,6 +99,14 @@ class Category extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope a query to only include featured categories.
+     */
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
     }
 
     /**

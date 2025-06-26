@@ -19,7 +19,7 @@
 
                     
                     <!-- Login Form -->
-                    <form method="POST" action="{{ route('login') }}" id="loginForm">
+                    <form method="POST" action="{{ route('auth.login.submit') }}" id="loginForm">
                         @csrf
                         
                         <!-- Email -->

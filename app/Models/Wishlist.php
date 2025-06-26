@@ -390,4 +390,34 @@ class Wishlist extends Model
             ->where('user_id', $userId)
             ->delete();
     }
+
+    /**
+     * Get the count of items in the wishlist.
+     */
+    public static function getItemsCount($userId = null)
+    {
+        $userId = $userId ?? Auth::id();
+        
+        if (!$userId) {
+            return 0;
+        }
+        
+        return static::where('user_id', $userId)->count();
+    }
+
+    /**
+     * Get all items in the wishlist.
+     */
+    public static function getItems($userId = null)
+    {
+        $userId = $userId ?? Auth::id();
+        
+        if (!$userId) {
+            return collect();
+        }
+        
+        return static::with('product')
+            ->where('user_id', $userId)
+            ->get();
+    }
 }

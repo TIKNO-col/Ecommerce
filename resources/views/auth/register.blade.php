@@ -19,7 +19,7 @@
 
                     
                     <!-- Registration Form -->
-                    <form method="POST" action="{{ route('register') }}" id="registerForm">
+                    <form method="POST" action="{{ route('auth.register.submit') }}" id="registerForm">
                         @csrf
                         
                         <!-- Name Fields -->

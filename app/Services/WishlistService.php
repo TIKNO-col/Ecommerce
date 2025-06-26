@@ -204,7 +204,7 @@ class WishlistService
             return Wishlist::where('user_id', $user->id)
                 ->with(['product' => function ($q) {
                     $q->where('is_active', true)
-                      ->select('id', 'name', 'slug', 'price', 'sale_price', 'image', 'stock');
+                      ->select('id', 'name', 'slug', 'price', 'sale_price', 'images', 'stock');
                 }])
                 ->whereHas('product', function ($q) {
                     $q->where('is_active', true);

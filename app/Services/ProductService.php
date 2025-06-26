@@ -129,7 +129,7 @@ class ProductService
             // Product suggestions
             $products = Product::where('is_active', true)
                 ->where('name', 'like', "%{$query}%")
-                ->select('id', 'name', 'slug', 'image')
+                ->select('id', 'name', 'slug', 'images')
                 ->limit($limit)
                 ->get()
                 ->map(function ($product) {

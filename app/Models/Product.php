@@ -211,6 +211,15 @@ class Product extends Model
     }
 
     /**
+     * Scope a query to get new arrivals (products from last 30 days).
+     */
+    public function scopeNewArrivals($query)
+    {
+        return $query->where('created_at', '>=', now()->subDays(30))
+                    ->orderByDesc('created_at');
+    }
+
+    /**
      * Scope a query to order by popularity.
      */
     public function scopePopular($query)
@@ -459,6 +468,14 @@ class Product extends Model
                       ->where('status', 'delivered');
             })
             ->exists();
+    }
+
+    /**
+     * Check if user can review this product (alias method).
+     */
+    public function canBeReviewedByUser($userId): bool
+    {
+        return $this->canBeReviewedBy($userId);
     }
 
     /**

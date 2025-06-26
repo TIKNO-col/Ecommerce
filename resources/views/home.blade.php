@@ -29,7 +29,7 @@
 </section>
 
 <!-- Featured Categories -->
-@if($featuredCategories->count() > 0)
+@if(isset($featuredCategories) && $featuredCategories->count() > 0)
 <section class="py-5">
     <div class="container">
         <div class="row mb-4">
@@ -62,7 +62,7 @@
 @endif
 
 <!-- Featured Products -->
-@if($featuredProducts->count() > 0)
+@if(isset($featuredProducts) && $featuredProducts->count() > 0)
 <section class="py-5 bg-light">
     <div class="container">
         <div class="row mb-4">
@@ -137,7 +137,7 @@
 @endif
 
 <!-- New Products -->
-@if($newProducts->count() > 0)
+@if(isset($newProducts) && $newProducts->count() > 0)
 <section class="py-5">
     <div class="container">
         <div class="row mb-4">
@@ -215,7 +215,7 @@
 @endif
 
 <!-- Sale Products -->
-@if($saleProducts->count() > 0)
+@if(isset($saleProducts) && $saleProducts->count() > 0)
 <section class="py-5 bg-warning bg-opacity-10">
     <div class="container">
         <div class="row mb-4">
